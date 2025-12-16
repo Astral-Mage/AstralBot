@@ -27,8 +27,5 @@
       <HintPath>..\..\FChat\FChat\bin\Release\net8.0\FChat.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="EventSystem\" />
-  </ItemGroup>
 
 </Project>
