@@ -37,13 +37,13 @@ namespace AstralBot.Bot
             else if (message.StartsWith(".c"))
             {
                 CharacterCore curCharacter = GetCharacterByName(character);
-                if (curCharacter.IdInfo != null && curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass != null && curCharacter.ClassInfo.CurrentClass != null && curCharacter.ClassInfo.CurrentClass.Flyweights != null)
+                if (curCharacter.IdInfo != null && curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass.Flyweights != null)
                 {
                     string rankstr = "";
                     for (int i = 0; i < curCharacter.ClassInfo.CurrentRank; i++) rankstr += "▮";
                     for (int i = 0; i < curCharacter.ClassInfo.CurrentClass.Flyweights.MaxRank - curCharacter.ClassInfo.CurrentRank; i++) rankstr += "▯";
                     string replystr = $"→ {curCharacter.IdInfo.Nickname ?? curCharacter.IdInfo.UserName} —— [b]⦅[/b]{curCharacter.ClassInfo.CurrentClass.Flyweights.Name}[b]⦆[/b] —— {rankstr}";
-                    if (curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass != null && curCharacter.ClassInfo.CurrentClass.Flyweights != null && curCharacter.RpInfo  != null)
+                    if (curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass != null  && curCharacter.RpInfo  != null)
                     {
                         replystr += $"[sup] (EXP: {curCharacter.ClassInfo.CurrentClass.Experience}/{curCharacter.ClassInfo.CurrentClass.GetXpNeededToRankUp()}) — (AFK: {Math.Round((decimal)curCharacter.RpInfo.FleshKincaidScore, 2)}){((curCharacter.ClassInfo.CurrentRank == curCharacter.ClassInfo.CurrentClass.Flyweights.MaxRank) ? $" Max Rank!" : "")}[/sup]";
                     }
@@ -53,8 +53,8 @@ namespace AstralBot.Bot
             }
             else if (message.StartsWith(".sd") && character == "Astral")
             {
-                Conn?.Disconnect();
                 ConsoleWriter.Write($"[Disconnecting] {character}");
+                Conn?.Disconnect();
             }
         }
 
@@ -77,34 +77,33 @@ namespace AstralBot.Bot
                     SqliteSchema.Update(curCharacter.RpInfo);
                     bool shortpost = parsed.Chars < 300;
                     string tosend = $"[sup]{(shortpost ? "🔻" : "")}Post Details | ([b]Rating:{parsed.FleshKincaid}[/b]) ([b]Base Experience:{parsed.BaseExperience}[/b]) ([b]Len Experience:{parsed.LengthExperience}[/b])[/sup]";
-
+                    bool unlockedClass = false;
+                    bool rankedup = false;
                     if (curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass.Flyweights != null)
                     {
-                        curCharacter.ClassInfo.ApplyExperience(parsed.BaseExperience, parsed.LengthExperience, shortpost, out bool rankedup);
+                        curCharacter.ClassInfo.ApplyExperience(parsed.BaseExperience, parsed.LengthExperience, shortpost, out rankedup);
                         tosend += $"[sup] — (EXP: {curCharacter.ClassInfo.CurrentClass.Experience}/{curCharacter.ClassInfo.CurrentClass.GetXpNeededToRankUp()}) — (AFK: {Math.Round((decimal)curCharacter.RpInfo.FleshKincaidScore, 2)}){(rankedup ? " — Rank Up!" : "")} {((curCharacter.ClassInfo.CurrentRank == curCharacter.ClassInfo.CurrentClass.Flyweights.MaxRank && rankedup) ? $"Max Rank!": "")}[/sup]";
                         SqliteSchema.Update(curCharacter.ClassInfo);
-                        curCharacter.ClassInfo.CheckForNewlyUnlockedClass();
-                        if (curCharacter.HasNewNotification())
+                        unlockedClass = curCharacter.ClassInfo.CheckForNewlyUnlockedClass();
+                        if (unlockedClass)
                         {
-                            tosend += $"[sup][color=red]❗[/color][/sup]";
+                            tosend += $"[sup][color=red]Class Unlocked❗[/color][/sup]";
                         }
                     }
 
-                    if (messagetype == MessageTypeEnum.Private) Conn?.SendPrivateMessage(character, tosend);
-                    else Conn?.SendChannelMessage(channel, tosend);
+                    if (messagetype == MessageTypeEnum.Private || unlockedClass || rankedup ) Conn?.SendPrivateMessage(character, tosend);
                 }
             }
         }
 
-        internal void UserKinksReceivedHandler(string character, string channel, string requester, List<KeyValuePair<string, string>> information, MessageTypeEnum messagetype)
+        internal void UserKinksReceivedHandler(string character, string requester, List<KeyValuePair<string, string>> information, MessageTypeEnum messagetype)
         {
             string toreply = string.Empty;
             toreply += $"[b][User Kinks Obtained ({information.Count})] {character}[/b]";
             foreach (var v in information)
                 toreply += $"{Environment.NewLine}  -([b]{v.Key}[/b]) {v.Value}";
 
-            if (messagetype == MessageTypeEnum.Channel) Conn?.SendChannelMessage(channel, toreply);
-            else if (messagetype == MessageTypeEnum.Private) Conn?.SendPrivateMessage(requester, toreply);
+            Conn?.SendPrivateMessage(requester, toreply);
         }
     }
 }

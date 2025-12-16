@@ -1,6 +1,6 @@
 ﻿using AstralBot.Bot;
 
-namespace AstralBot.UserData
+namespace AstralBot.DataFrames
 {
     public class RpInformation
     {

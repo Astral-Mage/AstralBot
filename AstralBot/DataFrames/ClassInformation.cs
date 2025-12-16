@@ -1,7 +1,7 @@
 ﻿using AstralBot.Bot;
 using System.Text.Json.Serialization;
 
-namespace AstralBot.UserData
+namespace AstralBot.DataFrames
 {
     public class UserClassDetails
     {

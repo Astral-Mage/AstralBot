@@ -1,6 +1,6 @@
 ﻿using AstralBot.Bot;
 
-namespace AstralBot.UserData
+namespace AstralBot.DataFrames
 {
     internal class IdInformation
     {

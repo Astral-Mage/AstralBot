@@ -1,7 +1,7 @@
 ﻿using AstralBot.Bot.CharacterChunk;
 using AstralBot.Databasing;
+using AstralBot.DataFrames;
 using AstralBot.Enums;
-using AstralBot.UserData;
 using FChat;
 
 namespace AstralBot.Bot
@@ -27,7 +27,6 @@ namespace AstralBot.Bot
             SqliteSchema.CreateTable<RpInformation>();
             SqliteSchema.CreateTable<ClassFlyweights>();
             SqliteSchema.CreateTable<ClassInformation>();
-            SqliteSchema.CreateTable<NotificationInformation>();
 
 
             // IdInformation

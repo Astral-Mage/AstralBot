@@ -51,57 +51,70 @@ namespace AstralBot
 
         static async Task<int> RunChatAsync(ChatConnection conn, string account, string pass, string character, string botname, string botversion, bool verbose, CancellationToken ct)
         {
-            var quitTcs         = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var disconnectedTcs = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var cancelTask      = CancellationTokenExtensions.AsTask(ct);
+            // Initialize Chat
+            conn.CharacterListReceivedHandler   += CharacterListReceivedHandler;
+            conn.AdReceivedHandler              += AdReceivedHandler;
+            conn.BroadcastReceivedHandler       += BroadcastReceivedHandler;
+            conn.ChannelDataUpdatedHandler      += ChannelDataUpdatedHandler;
+            conn.ChannelMessageReceivedHandler  += ChannelMessageReceivedHandler;
+            conn.ErrorReceivedHandler           += ErrorReceivedHandler;
+            conn.FriendListReceivedHandler      += FriendListReceivedHandler;
+            conn.PrivateMessageReceivedHandler  += PrivateMessageReceivedHandler;
+            conn.ServerStatsReceivedHandler     += ServerStatsReceivedHandler;
+            conn.SystemMessageReceivedHandler   += SystemMessageReceivedHandler;
+            conn.TypingChangedHandler           += TypingChangedHandler;
+            conn.UserJoinedChannelHandler       += UserJoinedChannelHandler;
+            conn.UserKinksReceivedHandler       += UserKinksReceivedHandler;
+            conn.UserLeftChannelHandler         += UserLeftChannelHandler;
+            conn.UserLoggedHandler              += UserLoggedHandler;
+            conn.UserProfileInfoReceivedHandler += UserProfileInfoReceivedHandler;
+            conn.ChannelsReceivedHandler        += ChannelsReceivedHandler;
 
-            try
+            const int maxRetries = 300;
+            int attempt = 0;
+
+            while (attempt < maxRetries)
             {
-                // Initialize Chat
-                conn.CharacterListReceivedHandler   += CharacterListReceivedHandler;
-                conn.AdReceivedHandler              += AdReceivedHandler;
-                conn.BroadcastReceivedHandler       += BroadcastReceivedHandler;
-                conn.ChannelDataUpdatedHandler      += ChannelDataUpdatedHandler;
-                conn.ChannelMessageReceivedHandler  += ChannelMessageReceivedHandler;
-                conn.ErrorReceivedHandler           += ErrorReceivedHandler;
-                conn.FriendListReceivedHandler      += FriendListReceivedHandler;
-                conn.PrivateMessageReceivedHandler  += PrivateMessageReceivedHandler;
-                conn.ServerStatsReceivedHandler     += ServerStatsReceivedHandler;
-                conn.SystemMessageReceivedHandler   += SystemMessageReceivedHandler;
-                conn.TypingChangedHandler           += TypingChangedHandler;
-                conn.UserJoinedChannelHandler       += UserJoinedChannelHandler;
-                conn.UserKinksReceivedHandler       += UserKinksReceivedHandler;
-                conn.UserLeftChannelHandler         += UserLeftChannelHandler;
-                conn.UserLoggedHandler              += UserLoggedHandler;
-                conn.UserProfileInfoReceivedHandler += UserProfileInfoReceivedHandler;
-                conn.ChannelsReceivedHandler        += ChannelsReceivedHandler;
+                attempt++;
 
+                // Recreate the TCSs for each attempt
+                var quitTcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+                var disconnectedTcs = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+                var cancelTask = CancellationTokenExtensions.AsTask(ct);
 
-                // Connect to Chat
-                conn.Connect(account, pass, character, botname, botversion, quitTcs, verbose);
-
-                // Wait for Chat activity or Cancellation
-                var completed = await Task.WhenAny(quitTcs.Task, cancelTask, disconnectedTcs.Task).ConfigureAwait(false);
-                if (completed == quitTcs.Task) return await quitTcs.Task.ConfigureAwait(false);
-                if (completed == cancelTask) return 0;
-                if (completed == disconnectedTcs.Task)
+                try
                 {
-                    Console.WriteLine("Disconnected from chat.");
-                    return 2;
+                    // Try to connect
+                    conn.Connect(account, pass, character, botname, botversion, quitTcs, verbose);
+
+                    // Wait for completion
+                    var completed = await Task.WhenAny(quitTcs.Task, cancelTask, disconnectedTcs.Task).ConfigureAwait(false);
+
+                    if (completed == quitTcs.Task)
+                    {
+                        // Graceful quit
+                        return await quitTcs.Task.ConfigureAwait(false);
+                    }
+                    else if (completed == cancelTask)
+                    {
+                        throw new OperationCanceledException(ct);
+                    }
+                    else if (completed == disconnectedTcs.Task)
+                    {
+                        Console.WriteLine($"Disconnected unexpectedly. Attempt {attempt} of {maxRetries}...");
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error in RunChatAsync: {ex}");
-                return 105;
-            }
-            finally
-            {
-                // Clean up resources
-                try { conn?.Disconnect(); } catch { }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Connection error: {ex.Message}. Attempt {attempt} of {maxRetries}...");
+                }
+
+                // Optional: wait a bit before retrying
+                await Task.Delay(TimeSpan.FromSeconds(60), CancellationToken.None);
             }
 
-            return 0;
+            // If we reach here, all attempts failed
+            throw new Exception("Failed to connect after multiple attempts due to unexpected disconnections.");
         }
     }
 

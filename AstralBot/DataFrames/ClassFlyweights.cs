@@ -1,7 +1,7 @@
 ﻿using AstralBot.Bot;
 using AstralBot.Enums;
 
-namespace AstralBot.UserData
+namespace AstralBot.DataFrames
 {
     public class ClassFlyweights
     {

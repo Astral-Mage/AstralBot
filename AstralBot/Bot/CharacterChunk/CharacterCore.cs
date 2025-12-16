@@ -1,4 +1,4 @@
-﻿using AstralBot.UserData;
+﻿using AstralBot.DataFrames;
 
 namespace AstralBot.Bot.CharacterChunk
 {
@@ -7,11 +7,5 @@ namespace AstralBot.Bot.CharacterChunk
         internal IdInformation? IdInfo {  get; set; }
         internal RpInformation? RpInfo { get; set; }
         internal ClassInformation? ClassInfo { get; set; }
-        internal List<NotificationInformation>? Notifications { get; set; }
-
-        public bool HasNewNotification()
-        {
-            return false;
-        }
     }
 }

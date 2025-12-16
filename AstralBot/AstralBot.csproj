@@ -28,7 +28,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="NotificationSystem\" />
+    <Folder Include="EventSystem\" />
   </ItemGroup>
 
 </Project>
