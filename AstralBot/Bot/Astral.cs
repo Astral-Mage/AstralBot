@@ -44,15 +44,36 @@ namespace AstralBot.Bot
                 cfly = [];
 
                 string description = "After getting thrust through space and time, you managed to come out unscathed. It's a miricle in and of itself you didn't die. Now you struggle to survive in an unknown land.";
-                List<KeyValuePair<ClassRequirementType, string>> reqs = [];
-                ClassFlyweights newclass = new() { Name = StartingClass, Rarity = 0, MaxRank = 3, GrowthRate = 1.0, BaseLevelXp = 1000, Description = description, Requirements = reqs, ClassColor = ClassColors.Gray };
+                Dictionary<ClassRequirementType, string> reqs = [];
+                ClassFlyweights newclass = new() { 
+                    Name = StartingClass, 
+                    Rarity = 0, 
+                    MaxRank = 3, 
+                    XpGrowthRate = 1.0, 
+                    BaseLevelXp = 1000, 
+                    Description = description, 
+                    Requirements = reqs, 
+                    ClassColor = ClassColors.Gray, 
+                    StatsGrowthRate = new Dictionary<Stats, double>() { { Stats.Attack, 1 }, { Stats.Hit, 1 }, { Stats.Intelligence, 1 }, { Stats.Durability, 1 }, { Stats.Luck, 1 } },
+                };
                 cfly.Add(newclass);
                 SqliteSchema.Insert(newclass);
 
+
                 string asdfname = "Adventurer";
-                string asdf = "You've survived for some time. Now familiar with the world around you, you begin to hone a wide range of skills as you venture out to make a name for yourself.";
-                List<KeyValuePair<ClassRequirementType, string>>? reqss = [new(ClassRequirementType.ClassMaxxed, StartingClass)];
-                ClassFlyweights newclasss = new() { Name = asdfname, Rarity = 1, MaxRank = 5, GrowthRate = 1.0, BaseLevelXp = 1000, Description = asdf, Requirements = reqss, ClassColor = ClassColors.White };
+                description = "You've survived for some time. Now familiar with the world around you, you begin to hone a wide range of skills as you venture out to make a name for yourself.";
+                reqs = new Dictionary<ClassRequirementType, string>() { { ClassRequirementType.ClassMaxxed, StartingClass } };
+                ClassFlyweights newclasss = new() { 
+                    Name = asdfname, 
+                    Rarity = 1, 
+                    MaxRank = 5, 
+                    XpGrowthRate = 1.0, 
+                    BaseLevelXp = 1000, 
+                    Description = description, 
+                    Requirements = reqs, 
+                    ClassColor = ClassColors.White,
+                    StatsGrowthRate = new Dictionary<Stats, double>() { { Stats.Attack, 1 }, { Stats.Hit, 1 }, { Stats.Intelligence, 1 }, { Stats.Durability, 1 }, { Stats.Luck, 1 } },
+                };
                 cfly.Add(newclasss);
                 SqliteSchema.Insert(newclasss);
                 Flyweights.Add(newclasss);

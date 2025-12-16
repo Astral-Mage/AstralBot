@@ -77,7 +77,7 @@ namespace AstralBot
 
         private static void UserKinksReceivedHandler(object sender, UserInfoEventArgs e)
         {
-            _AstralBot?.UserKinksReceivedHandler(e.Character, e.Operator, e.Information, e.MessageType);
+            _AstralBot?.UserKinksReceivedHandler(e.Character, e.Operator, e.Information);
             ConsoleWriter.Write($"[Kinks Obtained ({e.Character})] {e.Message}");
         }
 

@@ -96,7 +96,7 @@ namespace AstralBot.Bot
             }
         }
 
-        internal void UserKinksReceivedHandler(string character, string requester, List<KeyValuePair<string, string>> information, MessageTypeEnum messagetype)
+        internal void UserKinksReceivedHandler(string character, string requester, List<KeyValuePair<string, string>> information)
         {
             string toreply = string.Empty;
             toreply += $"[b][User Kinks Obtained ({information.Count})] {character}[/b]";

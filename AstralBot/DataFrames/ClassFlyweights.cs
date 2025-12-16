@@ -27,9 +27,12 @@ namespace AstralBot.DataFrames
         public int BaseLevelXp { get; set; } = 1000;
 
         [Column]
-        public double GrowthRate { get; set; } = 1.0;
+        public double XpGrowthRate { get; set; } = 1.0;
 
         [Column]
-        public List<KeyValuePair<ClassRequirementType, string>> Requirements { get; set; } = [];
+        public Dictionary<Stats, double> StatsGrowthRate { get; set; } = [];
+
+        [Column]
+        public Dictionary<ClassRequirementType, string> Requirements { get; set; } = [];
     }
 }

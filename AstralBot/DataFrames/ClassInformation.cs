@@ -75,7 +75,7 @@ namespace AstralBot.DataFrames
             if (CurrentClass != null && CurrentClass.Flyweights != null && CurrentRank == CurrentClass.Flyweights.MaxRank) return -1;
             if (CurrentClass == null || CurrentClass.Flyweights == null) return 0;
 
-            CurrentClass.Experience += (int)Math.Round((decimal)(((shortpost ? basexp * .5 : basexp) + lenxp) * CurrentClass.Flyweights.GrowthRate), 0);
+            CurrentClass.Experience += (int)Math.Round((decimal)(((shortpost ? basexp * .5 : basexp) + lenxp) * CurrentClass.Flyweights.XpGrowthRate), 0);
             if (CanRankUp() && CurrentClass.Experience >= CurrentClass.GetXpNeededToRankUp())
             {
                 RankUp();
