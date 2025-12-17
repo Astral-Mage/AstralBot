@@ -2,10 +2,10 @@
 
 namespace AstralBot.Bot.CharacterChunk
 {
-    internal class CharacterCore
+    public class CharacterCore
     {
-        internal IdInformation? IdInfo {  get; set; }
-        internal RpInformation? RpInfo { get; set; }
-        internal ClassInformation? ClassInfo { get; set; }
+        public IdInformation? IdInfo {  get; set; }
+        public RpInformation? RpInfo { get; set; }
+        public ClassInformation? ClassInfo { get; set; }
     }
 }

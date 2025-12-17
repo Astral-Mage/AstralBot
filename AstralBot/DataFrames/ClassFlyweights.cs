@@ -1,4 +1,5 @@
 ﻿using AstralBot.Bot;
+using AstralBot.Bot.CharacterChunk;
 using AstralBot.Enums;
 
 namespace AstralBot.DataFrames
@@ -34,5 +35,52 @@ namespace AstralBot.DataFrames
 
         [Column]
         public Dictionary<ClassRequirementType, string> Requirements { get; set; } = [];
+
+        public bool CheckIfUnlocked(CharacterCore character, out List<KeyValuePair<ClassRequirementType, string>> failedRequirements)
+        {
+            bool reply = false;
+            failedRequirements = [];
+            if (character.ClassInfo == null || character.IdInfo == null || character.ClassInfo.CurrentClass.Flyweights == null) return reply;
+            if (character.ClassInfo.UnlockedClasses.Any(x => x.Equals(ClassId))) return reply;
+
+            int satisfiedRequirements = 0;
+            foreach (var requirement in Requirements)
+            {
+                switch (requirement.Key)
+                {
+                    case ClassRequirementType.ClassMaxxed:
+                        {
+                            UserClassDetails? fw2 = character.ClassInfo.UserClasses.FirstOrDefault(x => x.Flyweights?.ClassId.Equals(ClassId) ?? false);
+                            if (fw2 == null && character.ClassInfo.CurrentClass.Flyweights.ClassId.Equals(ClassId)) fw2 = character.ClassInfo.CurrentClass;
+                            if (fw2 == null) return false;
+                            if (fw2.Rank.Equals(MaxRank))
+                            {
+                                satisfiedRequirements++;
+                            }
+                            else
+                            {
+                                failedRequirements.Add(requirement);
+                            }
+                        }
+                        break;
+                    case ClassRequirementType.ClassUnlocked:
+                        {
+                            if (character.ClassInfo.UnlockedClasses.Any(y => y.Equals(ClassId))) satisfiedRequirements++;
+                            else failedRequirements.Add(requirement);
+                        }
+                        break;
+                    default:
+                        {
+                            failedRequirements.Add(requirement);
+                            ConsoleWriter.Write($"Unhandled requirement type for class: {Name} | {character.IdInfo.UserName}");
+                        }
+                        break;
+                }
+            }
+
+            if (satisfiedRequirements == Requirements.Count) character.ClassInfo.UnlockedClasses.Add(ClassId);
+
+            return reply;
+        }
     }
 }

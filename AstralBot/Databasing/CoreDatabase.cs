@@ -242,7 +242,7 @@ namespace AstralBot.Databasing
             return value;
         }
 
-        static T MapRow<T>(SqliteDataReader reader) where T : new()
+        private static T MapRow<T>(SqliteDataReader reader) where T : new()
         {
             var obj = new T();
             var type = typeof(T);
@@ -318,17 +318,16 @@ namespace AstralBot.Databasing
             return obj;
         }
 
+        private static string GetTableName<T>() => typeof(T).Name;
 
-        static string GetTableName<T>() => typeof(T).Name;
-
-        static IEnumerable<PropertyInfo> GetMappedProperties(Type t)
+        private static IEnumerable<PropertyInfo> GetMappedProperties(Type t)
         {
             return t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                     .Where(p => p.CanRead && p.CanWrite)
                     .Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
         }
 
-        static string GetColumnName(PropertyInfo p)
+        private static string GetColumnName(PropertyInfo p)
         {
             var name = p.GetCustomAttribute<ColumnAttribute>()?.Name;
             return string.IsNullOrWhiteSpace(name) ? p.Name : name;

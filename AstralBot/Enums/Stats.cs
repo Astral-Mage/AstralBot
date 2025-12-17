@@ -9,5 +9,7 @@
         Evasion,
         Intelligence,
         Luck,
+        Life,
+        
     }
 }

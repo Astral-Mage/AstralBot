@@ -1,5 +1,7 @@
 ﻿using AstralBot.Bot.CharacterChunk;
 using AstralBot.Databasing;
+using AstralBot.DataFrames;
+using AstralBot.Enums;
 using AstralBot.RoleplaySystem;
 using FChat.Enums;
 
@@ -65,7 +67,7 @@ namespace AstralBot.Bot
             CharacterCore curCharacter = GetCharacterByName(character);
             if (curCharacter != null && curCharacter.RpInfo != null)
             {
-                var broken = BbCode.StripAndTrackColors(message);
+                var broken = BBCodeParser.StripAndTrackColors(message);
                 PostBreakdown? parsed = WritingEvaluator.EvaluatePost(broken.Text, character);
                 if (parsed != null)
                 {
@@ -84,7 +86,7 @@ namespace AstralBot.Bot
                         curCharacter.ClassInfo.ApplyExperience(parsed.BaseExperience, parsed.LengthExperience, shortpost, out rankedup);
                         tosend += $"[sup] — (EXP: {curCharacter.ClassInfo.CurrentClass.Experience}/{curCharacter.ClassInfo.CurrentClass.GetXpNeededToRankUp()}) — (AFK: {Math.Round((decimal)curCharacter.RpInfo.FleshKincaidScore, 2)}){(rankedup ? " — Rank Up!" : "")} {((curCharacter.ClassInfo.CurrentRank == curCharacter.ClassInfo.CurrentClass.Flyweights.MaxRank && rankedup) ? $"Max Rank!": "")}[/sup]";
                         SqliteSchema.Update(curCharacter.ClassInfo);
-                        unlockedClass = curCharacter.ClassInfo.CheckForNewlyUnlockedClass();
+                        unlockedClass = CheckForNewlyUnlockedClass(curCharacter, out _);
                         if (unlockedClass)
                         {
                             tosend += $"[sup][color=red]Class Unlocked❗[/color][/sup]";
@@ -94,6 +96,20 @@ namespace AstralBot.Bot
                     if (messagetype == MessageTypeEnum.Private || unlockedClass || rankedup ) Conn?.SendPrivateMessage(character, tosend);
                 }
             }
+        }
+
+        private bool CheckForNewlyUnlockedClass(CharacterCore character, out List<string> unlockedClasses)
+        {
+            bool reply = false;
+            unlockedClasses = [];
+            if (Flyweights == null || character.ClassInfo == null || character.IdInfo == null) return reply;
+            foreach (var classToCheck in Flyweights)
+            {
+                if (classToCheck.CheckIfUnlocked(character, out List<KeyValuePair<ClassRequirementType, string>> _))
+                    unlockedClasses.Add(classToCheck.Name);
+            }
+
+            return reply;
         }
 
         internal void UserKinksReceivedHandler(string character, string requester, List<KeyValuePair<string, string>> information)

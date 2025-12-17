@@ -2,7 +2,7 @@
 
 namespace AstralBot.DataFrames
 {
-    internal class IdInformation
+    public class IdInformation
     {
         [PrimaryKey(AutoIncrement = true)]
         public int UserId { get; set; } = 0;

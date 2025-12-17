@@ -37,7 +37,7 @@ namespace AstralBot.Bot
 
             // ClassFlyweights
             var cfly = SqliteSchema.GetAll<ClassFlyweights>();
-
+            
             // Insert Base Class if Needed
             if (cfly.Count == 0)
             {
@@ -52,7 +52,7 @@ namespace AstralBot.Bot
                     Description = "After getting thrust through space and time, you managed to come out unscathed. It's a miricle in and of itself you didn't die. Now you struggle to survive in an unknown land.", 
                     Requirements = [], 
                     ClassColor = ClassColors.Gray, 
-                    StatsGrowthRate = new Dictionary<Stats, double>() { { Stats.Attack, 1 }, { Stats.Hit, 1 }, { Stats.Intelligence, 1 }, { Stats.Durability, 1 }, { Stats.Luck, 1 } },
+                    StatsGrowthRate = new Dictionary<Stats, double>() { { Stats.Attack, 1 }, { Stats.Hit, 1 }, { Stats.Intelligence, 1 }, { Stats.Durability, 1 }, { Stats.Luck, 1 }, { Stats.Life, 1000 } },
                 };
                 cfly.Add(newclass);
                 SqliteSchema.Insert(newclass);
@@ -62,11 +62,11 @@ namespace AstralBot.Bot
                     Rarity = 1, 
                     MaxRank = 5, 
                     XpGrowthRate = 1.0, 
-                    BaseLevelXp = 1000, 
+                    BaseLevelXp = 1200, 
                     Description = "You've survived for some time. Now familiar with the world around you, you begin to hone a wide range of skills as you venture out to make a name for yourself.", 
                     Requirements = new Dictionary<ClassRequirementType, string>() { { ClassRequirementType.ClassMaxxed, StartingClass } }, 
                     ClassColor = ClassColors.White,
-                    StatsGrowthRate = new Dictionary<Stats, double>() { { Stats.Attack, 1 }, { Stats.Hit, 1 }, { Stats.Intelligence, 1 }, { Stats.Durability, 1 }, { Stats.Luck, 1 } },
+                    StatsGrowthRate = new Dictionary<Stats, double>() { { Stats.Attack, 1.2 }, { Stats.Hit, 1.1 }, { Stats.Intelligence, 1 }, { Stats.Durability, 1.1 }, { Stats.Luck, 1.1 }, { Stats.Life, 1200 } },
                 };
                 cfly.Add(newclasss);
                 SqliteSchema.Insert(newclasss);

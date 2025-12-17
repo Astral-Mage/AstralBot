@@ -1,4 +1,6 @@
 ﻿using AstralBot.Bot;
+using AstralBot.Bot.CharacterChunk;
+using AstralBot.Enums;
 using System.Text.Json.Serialization;
 
 namespace AstralBot.DataFrames
@@ -56,15 +58,6 @@ namespace AstralBot.DataFrames
         public ClassInformation()
         { }
 
-        public bool CheckForNewlyUnlockedClass()
-        {
-            bool reply = false;
-
-            // add notification to user's notification list
-
-
-            return reply;
-        }
 
         // returns -1 if already max rank
         public int ApplyExperience(int basexp, int lenxp, bool shortpost, out bool rankedup)
