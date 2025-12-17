@@ -8,10 +8,16 @@ namespace AstralBot.Databasing
 {
     internal static class SqliteSchema
     {
-        private const string DatabaseName = "AstralBot.db";
         private static SqliteConnection? conn;
+
+        private static string DatabaseName = string.Empty;
         private static bool isInitialized = false;
         private static readonly object _lock = new();
+
+        internal static void SetDatabaseToLoad(string database)
+        {
+            DatabaseName = database;
+        }
 
         internal static void CreateTable<T>()
         {

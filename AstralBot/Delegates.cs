@@ -1,6 +1,8 @@
-﻿using AstralBot.RoleplaySystem;
+﻿using AstralBot.Bot;
+using AstralBot.RoleplaySystem;
 using FChat;
 using FChat.EventArguments;
+using Microsoft.VisualBasic;
 
 namespace AstralBot
 {
@@ -77,7 +79,11 @@ namespace AstralBot
 
         private static void UserKinksReceivedHandler(object sender, UserInfoEventArgs e)
         {
-            _AstralBot?.UserKinksReceivedHandler(e.Character, e.Operator, e.Information);
+            string toreply = string.Empty;
+            toreply += $"[b][User Kinks Obtained ({e.Information.Count})] {e.Character}[/b]";
+            foreach (var v in e.Information)
+                toreply += $"{Environment.NewLine}  -([b]{v.Key}[/b]) {v.Value}";
+            Siren.Sing(e.MessageType, toreply, e.Operator);
             ConsoleWriter.Write($"[Kinks Obtained ({e.Character})] {e.Message}");
         }
 

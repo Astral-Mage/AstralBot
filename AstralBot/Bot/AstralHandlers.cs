@@ -1,6 +1,6 @@
 ﻿using AstralBot.Bot.CharacterChunk;
 using AstralBot.Databasing;
-using AstralBot.DataFrames;
+using AstralBot.DungeonSystem;
 using AstralBot.Enums;
 using AstralBot.RoleplaySystem;
 using FChat.Enums;
@@ -11,32 +11,64 @@ namespace AstralBot.Bot
     {
         internal void MessageReceivedHandler(string character, string channel, string message, MessageTypeEnum messagetype)
         {
-            DefaultMessageHandler(character, channel, message, messagetype);
-            RoleplayMessageHandler(character, channel, message, messagetype);
+            // split the message into command and message
+            string command = message.Split(" ", 2, StringSplitOptions.RemoveEmptyEntries).First();
+            string parsedmessage = message.Split(" ", 2, StringSplitOptions.RemoveEmptyEntries).Last();
+            if (string.IsNullOrWhiteSpace(parsedmessage) || parsedmessage.Equals(command))
+                parsedmessage = string.Empty;
+
+            if (DungeonMessageHandler(command, character, channel, parsedmessage, messagetype)) return;
+            if (DefaultMessageHandler(command, character, channel, parsedmessage, messagetype)) return;
+            if (RoleplayMessageHandler(command, character, channel, parsedmessage, messagetype)) return;
         }
 
-        private void DefaultMessageHandler(string character, string channel, string message, MessageTypeEnum messagetype)
+        private static Dungeon? FindDungeonByCharacterName(string character)
         {
-            if (message.StartsWith(".gk"))
+            Dungeon? reply = null;
+
+            return reply;
+        }
+
+        private bool DefaultMessageHandler(string command, string character, string channel, string message, MessageTypeEnum messagetype)
+        {
+            bool commandHandled = true;
+            if (command.Equals(".gk"))
             {
-                string target = character;
-                if (message.Contains(' '))
-                    target = message.Split(" ", 2, StringSplitOptions.RemoveEmptyEntries).Last();
+                string target = string.IsNullOrWhiteSpace(message) ? character : message;
                 if (Conn?.GetCharacterFromList(target) != null)
                 {
                     Conn?.GetUserKinks(target, character, messagetype, channel);
                     ConsoleWriter.Write($"[Getting Kinks] {character}");
                 }
             }
-            else if (message.StartsWith(".jr"))
+            else if (command.Equals(".cd"))
             {
-                Conn?.JoinChannel(message.Split(" ", 2, StringSplitOptions.RemoveEmptyEntries).Last());
+                Dungeon? dung = FindDungeonByCharacterName(character);
+                if (dung == null)
+                {
+                    CharacterCore curCharacter = GetCharacterByName(character);
+                    dung = new Dungeon(curCharacter, new DungeonLayout());
+                    ActiveDungeonRuns.Add(dung);
+                    Siren.Sing(messagetype, $"Dungeon has been created, {curCharacter.GetName()}", character);
+                }
+                else
+                {
+                    Siren.Sing(messagetype,$"You already have an active dungeon in progress or setup phase.", character);
+                }
             }
-            else if (message.StartsWith(".lr"))
+            else if (command.Equals(".jr"))
             {
-                Conn?.LeaveChannel(message.Split(" ", 2, StringSplitOptions.RemoveEmptyEntries).Last());
+                if (!string.IsNullOrWhiteSpace(message))
+                    Conn?.JoinChannel(message);
             }
-            else if (message.StartsWith(".c"))
+            else if (command.Equals(".lr"))
+            {
+                if (string.IsNullOrEmpty(message))
+                    Conn?.LeaveChannel(channel);
+                else
+                    Conn?.LeaveChannel(message);
+            }
+            else if (command.Equals(".c"))
             {
                 CharacterCore curCharacter = GetCharacterByName(character);
                 if (curCharacter.IdInfo != null && curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass.Flyweights != null)
@@ -45,24 +77,29 @@ namespace AstralBot.Bot
                     for (int i = 0; i < curCharacter.ClassInfo.CurrentRank; i++) rankstr += "▮";
                     for (int i = 0; i < curCharacter.ClassInfo.CurrentClass.Flyweights.MaxRank - curCharacter.ClassInfo.CurrentRank; i++) rankstr += "▯";
                     string replystr = $"→ {curCharacter.IdInfo.Nickname ?? curCharacter.IdInfo.UserName} —— [b]⦅[/b]{curCharacter.ClassInfo.CurrentClass.Flyweights.Name}[b]⦆[/b] —— {rankstr}";
-                    if (curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass != null  && curCharacter.RpInfo  != null)
+                    if (curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass != null && curCharacter.RpInfo != null)
                     {
                         replystr += $"[sup] (EXP: {curCharacter.ClassInfo.CurrentClass.Experience}/{curCharacter.ClassInfo.CurrentClass.GetXpNeededToRankUp()}) — (AFK: {Math.Round((decimal)curCharacter.RpInfo.FleshKincaidScore, 2)}){((curCharacter.ClassInfo.CurrentRank == curCharacter.ClassInfo.CurrentClass.Flyweights.MaxRank) ? $" Max Rank!" : "")}[/sup]";
                     }
-                    if (messagetype == MessageTypeEnum.Private) Conn?.SendPrivateMessage(character, replystr);
-                    else if (messagetype == MessageTypeEnum.Channel) Conn?.SendChannelMessage(channel, replystr);
+
+                    Siren.Sing(messagetype, replystr, character, channel);
                 }
             }
-            else if (message.StartsWith(".sd") && character == "Astral")
+            else if (command.Equals(".sd") && character == "Astral")
             {
                 ConsoleWriter.Write($"[Disconnecting] {character}");
                 Conn?.Disconnect();
             }
+            else
+                commandHandled = false;
+
+            return commandHandled;
         }
 
-        private void RoleplayMessageHandler(string character, string channel, string message, MessageTypeEnum messagetype)
+        private bool RoleplayMessageHandler(string command, string character, string channel, string message, MessageTypeEnum messagetype)
         {
-            if (!message.StartsWith("/me")) return;
+            if (!command.Equals("/me")) return false;
+            if (messagetype == MessageTypeEnum.Private) return false;
 
             CharacterCore curCharacter = GetCharacterByName(character);
             if (curCharacter != null && curCharacter.RpInfo != null)
@@ -93,9 +130,28 @@ namespace AstralBot.Bot
                         }
                     }
 
-                    if (messagetype == MessageTypeEnum.Private || unlockedClass || rankedup ) Conn?.SendPrivateMessage(character, tosend);
+                    if (unlockedClass || rankedup) Siren.Sing(MessageTypeEnum.Private, tosend, character, channel);
                 }
             }
+            return true;
+        }
+        private bool DungeonMessageHandler(string command, string character, string channel, string message, MessageTypeEnum messagetype)
+        {
+            bool commandHandled = false;
+            if (ActiveDungeonRuns.Count != 0 && Conn != null)
+            {
+                ActiveDungeonRuns.ForEach((run) =>
+                {
+                    if (run.CheckCommand(character, command, message, channel))
+                    {
+                        run.RunDungeon(Conn, character, command, message, channel, messagetype);
+                        commandHandled = true;
+                        return;
+                    }
+                    return;
+                });
+            }
+            return commandHandled;
         }
 
         private bool CheckForNewlyUnlockedClass(CharacterCore character, out List<string> unlockedClasses)
@@ -110,16 +166,6 @@ namespace AstralBot.Bot
             }
 
             return reply;
-        }
-
-        internal void UserKinksReceivedHandler(string character, string requester, List<KeyValuePair<string, string>> information)
-        {
-            string toreply = string.Empty;
-            toreply += $"[b][User Kinks Obtained ({information.Count})] {character}[/b]";
-            foreach (var v in information)
-                toreply += $"{Environment.NewLine}  -([b]{v.Key}[/b]) {v.Value}";
-
-            Conn?.SendPrivateMessage(requester, toreply);
         }
     }
 }

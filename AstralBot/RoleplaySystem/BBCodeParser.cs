@@ -14,7 +14,7 @@ namespace AstralBot.RoleplaySystem
             = new(StringComparer.OrdinalIgnoreCase);
 
         // Optional: colors opened in order
-        public List<string> OpenedColorsInOrder { get; init; } = new();
+        public List<string> OpenedColorsInOrder { get; init; } = [];
     }
 
     public static class BBCodeParser
@@ -83,19 +83,12 @@ namespace AstralBot.RoleplaySystem
 
         // ----------------- Helpers -----------------
 
-        private readonly struct ParsedTag
+        private readonly struct ParsedTag(string name, bool isClosing, string? attribute, int endIndex)
         {
-            public ParsedTag(string name, bool isClosing, string? attribute, int endIndex)
-            {
-                Name = name;
-                IsClosing = isClosing;
-                Attribute = attribute;
-                EndIndex = endIndex;
-            }
-            public string Name { get; }
-            public bool IsClosing { get; }
-            public string? Attribute { get; }
-            public int EndIndex { get; } // index of ']'
+            public string Name { get; } = name;
+            public bool IsClosing { get; } = isClosing;
+            public string? Attribute { get; } = attribute;
+            public int EndIndex { get; } = endIndex;
 
             public bool NameEquals(string other) =>
                 string.Equals(Name, other, StringComparison.OrdinalIgnoreCase);
@@ -116,9 +109,9 @@ namespace AstralBot.RoleplaySystem
             if (inside.Length == 0)
                 return false;
 
-            bool isClosing = inside.StartsWith("/", StringComparison.Ordinal);
+            bool isClosing = inside.StartsWith('/');
             if (isClosing)
-                inside = inside.Substring(1).Trim();
+                inside = inside[1..].Trim();
 
             string name;
             string? attr = null;
@@ -126,8 +119,8 @@ namespace AstralBot.RoleplaySystem
             int eq = inside.IndexOf('=');
             if (eq >= 0)
             {
-                name = inside.Substring(0, eq).Trim();
-                attr = inside.Substring(eq + 1).Trim();
+                name = inside[..eq].Trim();
+                attr = inside[(eq + 1)..].Trim();
                 attr = TrimWrappingQuotes(attr);
             }
             else
@@ -147,7 +140,7 @@ namespace AstralBot.RoleplaySystem
             if (s.Length >= 2)
             {
                 if (s[0] == '"' && s[^1] == '"' || s[0] == '\'' && s[^1] == '\'')
-                    return s.Substring(1, s.Length - 2);
+                    return s[1..^1];
             }
             return s;
         }
