@@ -1,10 +1,6 @@
 ﻿using FChat;
 using FChat.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace AstralBot.Bot
 {
@@ -23,6 +19,22 @@ namespace AstralBot.Bot
                 Conn?.SendPrivateMessage(character, message);
             else if (messageType == MessageTypeEnum.Channel)
                 Conn?.SendChannelMessage(character, channel);
+        }
+    }
+
+    public static class GuidStuff
+    {
+        public static string CreateId()
+        {
+            const string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+            Span<byte> bytes = stackalloc byte[9];
+            RandomNumberGenerator.Fill(bytes);
+
+            Span<char> result = stackalloc char[9];
+            for (int i = 0; i < 9; i++)
+                result[i] = chars[bytes[i] % chars.Length];
+
+            return new string(result);
         }
     }
 }

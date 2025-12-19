@@ -22,17 +22,10 @@ namespace AstralBot.Bot
             if (RoleplayMessageHandler(command, character, channel, parsedmessage, messagetype)) return;
         }
 
-        private static Dungeon? FindDungeonByCharacterName(string character)
-        {
-            Dungeon? reply = null;
-
-            return reply;
-        }
-
         private bool DefaultMessageHandler(string command, string character, string channel, string message, MessageTypeEnum messagetype)
         {
             bool commandHandled = true;
-            if (command.Equals(".gk"))
+            if (command.Equals(BotCommands.GetKinks))
             {
                 string target = string.IsNullOrWhiteSpace(message) ? character : message;
                 if (Conn?.GetCharacterFromList(target) != null)
@@ -41,34 +34,19 @@ namespace AstralBot.Bot
                     ConsoleWriter.Write($"[Getting Kinks] {character}");
                 }
             }
-            else if (command.Equals(".cd"))
-            {
-                Dungeon? dung = FindDungeonByCharacterName(character);
-                if (dung == null)
-                {
-                    CharacterCore curCharacter = GetCharacterByName(character);
-                    dung = new Dungeon(curCharacter, new DungeonLayout());
-                    ActiveDungeonRuns.Add(dung);
-                    Siren.Sing(messagetype, $"Dungeon has been created, {curCharacter.GetName()}", character);
-                }
-                else
-                {
-                    Siren.Sing(messagetype,$"You already have an active dungeon in progress or setup phase.", character);
-                }
-            }
-            else if (command.Equals(".jr"))
+            else if (command.Equals(BotCommands.JoinChannel))
             {
                 if (!string.IsNullOrWhiteSpace(message))
                     Conn?.JoinChannel(message);
             }
-            else if (command.Equals(".lr"))
+            else if (command.Equals(BotCommands.LeaveChannel))
             {
                 if (string.IsNullOrEmpty(message))
                     Conn?.LeaveChannel(channel);
                 else
                     Conn?.LeaveChannel(message);
             }
-            else if (command.Equals(".c"))
+            else if (command.Equals(BotCommands.GetCard))
             {
                 CharacterCore curCharacter = GetCharacterByName(character);
                 if (curCharacter.IdInfo != null && curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass.Flyweights != null)
@@ -85,7 +63,7 @@ namespace AstralBot.Bot
                     Siren.Sing(messagetype, replystr, character, channel);
                 }
             }
-            else if (command.Equals(".sd") && character == "Astral")
+            else if (command.Equals(BotCommands.Shutdown) && character == "Astral")
             {
                 ConsoleWriter.Write($"[Disconnecting] {character}");
                 Conn?.Disconnect();
@@ -109,7 +87,7 @@ namespace AstralBot.Bot
                 if (parsed != null)
                 {
                     curCharacter.RpInfo.TotalPosts++;
-                    if (broken.ColorOpenCount > 0) curCharacter.RpInfo.PostsWithColor++; 
+                    if (broken.ColorOpenCount > 0) curCharacter.RpInfo.PostsWithColor++;
                     curCharacter.RpInfo.TotalParagraphs += parsed.Paragraphs;
                     curCharacter.RpInfo.TotalWords += parsed.Words;
                     curCharacter.RpInfo.FleshKincaidScore = (curCharacter.RpInfo.FleshKincaidScore * (curCharacter.RpInfo.TotalPosts - 1) + parsed.FleshKincaid) / (curCharacter.RpInfo.TotalPosts);
@@ -121,7 +99,7 @@ namespace AstralBot.Bot
                     if (curCharacter.ClassInfo != null && curCharacter.ClassInfo.CurrentClass.Flyweights != null)
                     {
                         curCharacter.ClassInfo.ApplyExperience(parsed.BaseExperience, parsed.LengthExperience, shortpost, out rankedup);
-                        tosend += $"[sup] — (EXP: {curCharacter.ClassInfo.CurrentClass.Experience}/{curCharacter.ClassInfo.CurrentClass.GetXpNeededToRankUp()}) — (AFK: {Math.Round((decimal)curCharacter.RpInfo.FleshKincaidScore, 2)}){(rankedup ? " — Rank Up!" : "")} {((curCharacter.ClassInfo.CurrentRank == curCharacter.ClassInfo.CurrentClass.Flyweights.MaxRank && rankedup) ? $"Max Rank!": "")}[/sup]";
+                        tosend += $"[sup] — (EXP: {curCharacter.ClassInfo.CurrentClass.Experience}/{curCharacter.ClassInfo.CurrentClass.GetXpNeededToRankUp()}) — (AFK: {Math.Round((decimal)curCharacter.RpInfo.FleshKincaidScore, 2)}){(rankedup ? " — Rank Up!" : "")} {((curCharacter.ClassInfo.CurrentRank == curCharacter.ClassInfo.CurrentClass.Flyweights.MaxRank && rankedup) ? $"Max Rank!" : "")}[/sup]";
                         SqliteSchema.Update(curCharacter.ClassInfo);
                         unlockedClass = CheckForNewlyUnlockedClass(curCharacter, out _);
                         if (unlockedClass)
@@ -138,13 +116,31 @@ namespace AstralBot.Bot
         private bool DungeonMessageHandler(string command, string character, string channel, string message, MessageTypeEnum messagetype)
         {
             bool commandHandled = false;
-            if (ActiveDungeonRuns.Count != 0 && Conn != null)
+
+            if (command.Equals(BotCommands.CreateDungeon))
             {
+                Dungeon? dung = FindDungeonByCharacterName(character);
+                if (dung == null)
+                {
+                    CharacterCore curCharacter = GetCharacterByName(character);
+                    dung = new Dungeon(curCharacter, new DungeonLayout());
+                    ActiveDungeonRuns.Add(dung);
+                    Siren.Sing(messagetype, $"Dungeon has been created, {curCharacter.GetName()}", character);
+                }
+                else
+                {
+                    Siren.Sing(messagetype, $"You already have an active dungeon in progress or setup phase.", character);
+                }
+                commandHandled = true;
+            }
+            else if (ActiveDungeonRuns.Count != 0 && Conn != null)
+            {
+                CharacterCore curCharacter = GetCharacterByName(character);
+                List<Dungeon> foundDungeons = [];
                 ActiveDungeonRuns.ForEach((run) =>
                 {
-                    if (run.CheckCommand(character, command, message, channel))
+                    if (run.CheckCommand(messagetype, curCharacter, command, message, channel))
                     {
-                        run.RunDungeon(Conn, character, command, message, channel, messagetype);
                         commandHandled = true;
                         return;
                     }
@@ -152,6 +148,22 @@ namespace AstralBot.Bot
                 });
             }
             return commandHandled;
+        }
+
+        private Dungeon? FindDungeonByCharacterName(string character)
+        {
+            Dungeon? reply = null;
+
+            ActiveDungeonRuns.ForEach(x =>
+            {
+                if (x.Players.Any(y => y.GetName(true).Equals(character)))
+                {
+                    reply = x;
+                    return;
+                }
+            });
+
+            return reply;
         }
 
         private bool CheckForNewlyUnlockedClass(CharacterCore character, out List<string> unlockedClasses)

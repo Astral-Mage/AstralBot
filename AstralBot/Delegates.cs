@@ -1,8 +1,6 @@
 ﻿using AstralBot.Bot;
-using AstralBot.RoleplaySystem;
 using FChat;
 using FChat.EventArguments;
-using Microsoft.VisualBasic;
 
 namespace AstralBot
 {
